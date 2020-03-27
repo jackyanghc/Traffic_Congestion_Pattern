@@ -7,6 +7,7 @@ import datetime
 
 class ProcessData():
     file_name = '../traffic_data'
+    correlation_path = '../road_data/road_correlation.csv'
 
     @staticmethod
     def get_csv_path(root_path):
@@ -99,12 +100,12 @@ class ProcessData():
                 df = df.drop_duplicates(
                     keep='first',
                     inplace=False)
-                df.to_csv('../road_data/road_correlation.csv', mode='a', index=False, header=False)
+                df.to_csv(ProcessData.correlation_path, mode='a', index=False, header=False)
                 df = pd.DataFrame(columns=['lcode1', 'lcode2', 'correlation'])
 
     @staticmethod
     def open_road_correlation():
-        df = pd.read_csv('../road_data/road_correlation.csv')
+        df = pd.read_csv(ProcessData.correlation_path)
         df = df.drop_duplicates(
             keep='first',
             inplace=False)

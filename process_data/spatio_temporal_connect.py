@@ -174,8 +174,8 @@ class SpatioTemporal():
                         break
                     propagation_time = tmp_time + datetime.timedelta(minutes=time_interal)
                 congestion_time.append((start_time, end_time))
-        # print(congestion_time)
-        # print(len(congestion_time))
+        print(congestion_time)
+        print(len(congestion_time))
 
 
 if __name__ == '__main__':

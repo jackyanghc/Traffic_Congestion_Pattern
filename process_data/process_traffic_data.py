@@ -105,6 +105,10 @@ class ProcessData():
 
     @staticmethod
     def open_road_correlation():
+        """
+
+        :return:
+        """
         df = pd.read_csv(ProcessData.correlation_path)
         df = df.drop_duplicates(
             keep='first',
@@ -118,5 +122,5 @@ if __name__ == '__main__':
     csv_lists = ProcessData.get_csv_path(ProcessData.file_name)
     for csv_file in csv_lists:
         data = ProcessData.open_road_csv(csv_file)
-        ProcessData.get_temporal_correlation(data)
+        # ProcessData.get_temporal_correlation(data)
         break

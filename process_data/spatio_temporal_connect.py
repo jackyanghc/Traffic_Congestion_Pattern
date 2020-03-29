@@ -14,6 +14,7 @@ class SpatioTemporal():
     """
     file_path = '../road_data/spatio_temporal_correlation.csv'
     html_path = '../roadmap_html/Roadmap.html'
+    congestion_file = '../congestion_data/congestion.txt'
 
     @staticmethod
     def spatio_temporal_correlation():
@@ -159,6 +160,7 @@ class SpatioTemporal():
         # s = datas['2020-01-02 06:00:00':'2020-01-02 06:00:00']
         time_list = sorted(set(datas.index))
         congestion_time = list()
+        congestion_data = list()
         end_time = time_list[0]
         for start_time in time_list:
             if start_time < end_time:
@@ -179,10 +181,45 @@ class SpatioTemporal():
                         break
                     propagation_time = tmp_time + datetime.timedelta(minutes=time_interal)
                 if flag:
-                    congestion_time.append((start_time, end_time))
-        print(congestion_time)
-        print(len(congestion_time))
-        return congestion_time
+                    a_start_time = start_time - datetime.timedelta(minutes=time_interal//2)
+                    a_end_time = end_time - datetime.timedelta(minutes=time_interal//2)
+                    c_data = datas[a_start_time:a_end_time]
+                    congestion_time.append((a_start_time,a_end_time))
+                    congestion_data.append(c_data)
+        return congestion_time, congestion_data
+
+    @staticmethod
+    def process_congestion_data(congestion_datas):
+        """
+
+        :param congestion_data:
+        :return:
+        """
+        data = dict()
+        for congestion_data in congestion_datas:
+            group = pd.DataFrame(congestion_data.groupby(by='Lcode'))
+            for i in range(len(group)):
+                tmp = group.loc[i]
+                tmp = tmp.reset_index(drop=True)
+                code = tmp[0]
+                tmp = tmp[1]
+                congestion = tmp['CongestionRate'].tolist()
+                # speed = tmp['speed'].tolist()
+                try:
+                    data[code].append(congestion)
+                except:
+                    data[code] = [congestion]
+        f = open(SpatioTemporal.congestion_file, 'w')
+        f.write(str(data))
+        f.close()
+
+    @staticmethod
+    def open_dict_data():
+        f = open(SpatioTemporal.congestion_file, 'r')
+        a = f.read()
+        dict_name = eval(a)
+        f.close()
+        return dict_name
 
 
 if __name__ == '__main__':
@@ -191,6 +228,7 @@ if __name__ == '__main__':
     csv_lists = ProcessData.get_csv_path(ProcessData.file_name)
     for csv_file in csv_lists:
         data = ProcessData.open_road_csv(csv_file)
-        congestion_time = SpatioTemporal.get_graph_congestion(graph_list[1], data, time_interal=8)
+        congestion_time, congestion_data = SpatioTemporal.get_graph_congestion(graph_list[1], data, time_interal=8)
         # ProcessData.get_temporal_correlation(data)
+        SpatioTemporal.process_congestion_data(congestion_data)
         break

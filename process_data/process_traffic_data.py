@@ -2,12 +2,17 @@
 import pandas as pd
 import os
 import datetime
+from process_data.road_info import RoadInfo
+import matplotlib.pyplot as plt
+import numpy as np
+plt.rcParams['font.sans-serif'] = ['Arial Unicode MS']
 # x = ['0 Unknown','1 Unimpeded','2 Amble','3 Congestion','4 Heavy Congestion' ]
 
 
 class ProcessData():
     file_name = '../traffic_data'
     correlation_path = '../road_data/road_correlation.csv'
+    top_congestion_path = '../road_data/congestion_time.csv'
 
     @staticmethod
     def get_csv_path(root_path):
@@ -54,8 +59,10 @@ class ProcessData():
         end_time = date.loc[0] + datetime.timedelta(days=1) - datetime.timedelta(minutes=50)
         data.Timestamp = date
         data = data.set_index('Timestamp')
-        # 获取时间在早6点到晚9点的数据
         data = data[start_time:end_time]
+        data = RoadInfo.road_in_area_code(data)
+        # 获取时间在早6点到晚9点的数据
+        del date
         return data
 
     @staticmethod
@@ -77,9 +84,18 @@ class ProcessData():
         :param data:
         :return:
         """
+
         datas = data[data["CongestionRate"] >= 3]
         df = datas.groupby(['Lcode']).count()['CongestionRate']
-        return df
+        df = pd.DataFrame(df)
+        try:
+            d = pd.read_csv(ProcessData.top_congestion_path)
+            d = d.set_index('Lcode')
+            df = df.add(d,  fill_value=0)
+        except:
+            pass
+        df.to_csv(ProcessData.top_congestion_path, header=True, index=True)
+
 
     @staticmethod
     def get_temporal_correlation(data):
@@ -127,11 +143,52 @@ class ProcessData():
         df.reset_index(drop=True)
         return df
 
+    @staticmethod
+    def draw_top_congestion():
+        df = pd.read_csv(ProcessData.top_congestion_path)
+        sort_df = df.sort_values(by='CongestionRate', ascending=False)
+        sort_df = sort_df.reset_index(drop=True)
+        time_list, name_list = [], []
+        avg = sort_df['CongestionRate'].mean()
+        N = 10
+        for i in range(N):
+            code = int(sort_df.loc[i]['Lcode'])
+            time = int(sort_df.loc[i]['CongestionRate'])
+            time_list.append(time)
+            name = RoadInfo.get_road_name_from_lcode(code)
+            name_list.append(name)
+        plt.figure(figsize=(8, 6), dpi=160)
+        # 再创建一个规格为 1 x 1 的子图
+        plt.subplot(1, 1, 1)
+        # 柱子总数
+        # 包含每个柱子对应值的序列
+        values = time_list
+        # 包含每个柱子下标的序列
+        index = name_list
+        # 柱子的宽度
+        width = 0.35
+        # 绘制柱状图, 每根柱子的颜色为紫罗兰色
+        plt.bar(index, values, width, label="拥堵次数", color="#87CEFA")
+        # 设置横轴标签
+        plt.xlabel('路名')
+        # 设置纵轴标签
+        plt.ylabel('堵塞次数')
+        # 添加标题
+        plt.title('Top路段堵塞次数一览图')
+        # # 添加纵横轴的刻度
+        # plt.xticks(index, name_list)
+        # plt.yticks(np.arange(0, 81, 10))
+        # 画直线
+        plt.axhline(y=avg, color='r', linestyle='-.', label='平均拥堵次数')
+        # 添加图例
+        plt.legend(loc="upper right")
+        plt.show()
+
 
 if __name__ == '__main__':
-    csv_lists = ProcessData.get_csv_path(ProcessData.file_name)
-    for csv_file in csv_lists:
-        data = ProcessData.open_road_csv(csv_file)
-        # ProcessData.get_temporal_correlation(data)
-        ProcessData.get_top_congestion_lcode(data)
-        break
+    # csv_lists = ProcessData.get_csv_path(ProcessData.file_name)
+    # for csv_file in csv_lists:
+    #     data = ProcessData.open_road_csv(csv_file)
+    #     # ProcessData.get_temporal_correlation(data)
+    #     ProcessData.get_top_congestion_lcode(data)
+    ProcessData.draw_top_congestion()

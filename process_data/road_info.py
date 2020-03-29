@@ -4,16 +4,6 @@ import pandas as pd
 import time
 
 
-def print_run_time(func):
-    def wrapper(*args, **kw):
-        local_time = time.time()
-        ret = func(*args, **kw)
-        info_str = 'Function [%s] run time is %.2f' % (func.__name__, time.time() - local_time)
-        print(info_str)
-        return ret
-    return wrapper
-
-
 class RoadInfo():
     # 关于路网的信息
     road_file = '../information_of_road'
@@ -33,7 +23,6 @@ class RoadInfo():
         return int(lines_1.distance(lines_2) * 1000)
 
     @staticmethod
-    @print_run_time
     def save_road_distance(roads):
         """
         计算两个路网直接的距离信息，存储
@@ -75,7 +64,7 @@ class RoadInfo():
         """
         data = RoadInfo.get_road_info()
         try:
-            name = data[data['Lcode'] == lcode]['name']
+            name = data[data['Lcode'] == str(lcode)]['name'].values[0]
         except:
             print('can not find lcode')
             name = -1
@@ -83,17 +72,54 @@ class RoadInfo():
         return name
 
     @staticmethod
-    def road_in_code(lcodes, road_info):
+    def get_lcode_in_area():
+        roads = RoadInfo.get_road_info()
+
+        def is_inBox(x, y):
+            A = [121.357288, 31.10965]
+            B = [121.672458, 31.155495]
+            C = [121.620959, 31.386143]
+            D = [121.324329, 31.34041]
+            a = (B[0] - A[0]) * (y - A[1]) - (B[1] - A[1]) * (x - A[0])
+            b = (C[0] - B[0]) * (y - B[1]) - (C[1] - B[1]) * (x - B[0])
+            c = (D[0] - C[0]) * (y - C[1]) - (D[1] - C[1]) * (x - C[0])
+            d = (A[0] - D[0]) * (y - D[1]) - (A[1] - D[1]) * (x - D[0])
+            if (a > 0 and b > 0 and c > 0 and d > 0) or (a < 0 and b < 0 and c < 0 and d < 0):
+                return 1
+            else:
+                return 0
+
+        codes = []
+        for item in range(0, len(roads)):
+            s = roads.loc[item]
+            q = list(s['geometry'].coords)
+            for i in q:
+                if is_inBox(i[0], i[1]) == 1:
+                    codes.append(s['Lcode'])
+                    break
+        return codes
+
+    @staticmethod
+    def road_in_area_code(data):
         """
-        获取对应在时间内的lcodes信息
-        :param lcodes:
+        获取对应在区域内的lcodes信息
         :param data:
         :return:
         """
-        return road_info.loc[road_info['Lcode'].isin(lcodes)]
+        lcodes = RoadInfo.get_lcode_in_area()
+        return data.loc[data['Lcode'].isin(lcodes)]
+
+    @staticmethod
+    def resave_road():
+        """
+
+        :return:
+        """
+        pass
+        # roads.to_file("information_of_road", encoding='utf-8')
 
 
 if __name__ == '__main__':
-    # roads = RoadInfo.get_road_info()
+    RoadInfo.resave_road()
     # RoadInfo.save_road_distance(roads)
-    print(len(RoadInfo.open_road_distance(10)))
+    # print(len(RoadInfo.open_road_distance(10)))

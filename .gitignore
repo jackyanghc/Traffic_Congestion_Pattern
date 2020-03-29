@@ -10,6 +10,7 @@ __pycache__/
 *.log
 traffic_data
 road_data
+congestion_data
 
 # Distribution / packaging
 .Python

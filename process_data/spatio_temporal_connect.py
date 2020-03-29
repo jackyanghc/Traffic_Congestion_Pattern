@@ -164,18 +164,25 @@ class SpatioTemporal():
             if start_time < end_time:
                 continue
             tmp = datas[start_time:start_time]
+            flag = 1
             if tmp['CongestionRate'].max() >= 3:
                 propagation_time = start_time + datetime.timedelta(minutes=time_interal)
                 while True:
                     s = datas[start_time:propagation_time]
-                    tmp_time = s[s['CongestionRate'] >= 3].index.max()
+                    q = s[s['CongestionRate'] >= 3]
+                    if len(q) < 2:
+                        flag = 0
+                        break
+                    tmp_time = q.index.max()
                     if tmp_time + datetime.timedelta(minutes=time_interal) == propagation_time:
                         end_time = propagation_time
                         break
                     propagation_time = tmp_time + datetime.timedelta(minutes=time_interal)
-                congestion_time.append((start_time, end_time))
+                if flag:
+                    congestion_time.append((start_time, end_time))
         print(congestion_time)
         print(len(congestion_time))
+        return congestion_time
 
 
 if __name__ == '__main__':
@@ -184,6 +191,6 @@ if __name__ == '__main__':
     csv_lists = ProcessData.get_csv_path(ProcessData.file_name)
     for csv_file in csv_lists:
         data = ProcessData.open_road_csv(csv_file)
-        SpatioTemporal.get_graph_congestion(graph_list[1], data, time_interal=8)
+        congestion_time = SpatioTemporal.get_graph_congestion(graph_list[1], data, time_interal=8)
         # ProcessData.get_temporal_correlation(data)
         break

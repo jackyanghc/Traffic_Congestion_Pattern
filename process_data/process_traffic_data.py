@@ -71,6 +71,17 @@ class ProcessData():
         pass
 
     @staticmethod
+    def get_top_congestion_lcode(data):
+        """
+        获取这段时间内拥堵发生最多的路段名
+        :param data:
+        :return:
+        """
+        datas = data[data["CongestionRate"] >= 3]
+        df = datas.groupby(['Lcode']).count()['CongestionRate']
+        return df
+
+    @staticmethod
     def get_temporal_correlation(data):
         """
         根据拥堵信息，构建路段时间关联信息
@@ -84,7 +95,6 @@ class ProcessData():
         count = 0
         for i in range(number):
             count += 1
-
             current_time = datas.index[i]
             # 获取之后所有拥堵点的数据
             end_time = current_time + datetime.timedelta(minutes=10)
@@ -123,4 +133,5 @@ if __name__ == '__main__':
     for csv_file in csv_lists:
         data = ProcessData.open_road_csv(csv_file)
         # ProcessData.get_temporal_correlation(data)
+        ProcessData.get_top_congestion_lcode(data)
         break

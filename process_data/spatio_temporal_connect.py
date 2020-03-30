@@ -13,7 +13,7 @@ class SpatioTemporal():
     结合时间和空间，构建拥堵模式graph
     """
     file_path = '../road_data/spatio_temporal_correlation.csv'
-    html_path = '../roadmap_html/Roadmap.html'
+    html_path = '../roadmap_html/Roadmap_1.html'
     congestion_file = '../congestion_data/congestion.txt'
 
     @staticmethod
@@ -22,7 +22,7 @@ class SpatioTemporal():
         获得路径关联矩阵
         :return:
         """
-        road = RoadInfo.open_road_distance(10)
+        road = RoadInfo.open_road_distance(5)
         time = ProcessData.open_road_correlation()
         df = pd.DataFrame(columns=['lcode1', 'lcode2', 'dis'])
         count = 0
@@ -37,6 +37,11 @@ class SpatioTemporal():
                 continue
             elif len(q):
                 df.loc[count] = [lcode1, lcode2, q['min_dis'].values[0]]
+            if i % 100 == 0:
+                print(i)
+                df = df.drop_duplicates(keep='first', inplace=False)
+                df.to_csv(SpatioTemporal.file_path, mode='a', index=False, header=False)
+                df = pd.DataFrame(columns=['lcode1', 'lcode2', 'dis'])
         df = df.drop_duplicates(keep='first', inplace=False)
         df.to_csv(SpatioTemporal.file_path, mode='a', index=False, header=False)
 
@@ -46,14 +51,14 @@ class SpatioTemporal():
         打开文件
         :return:
         """
-        df = pd.read_csv(SpatioTemporal.file_path)
+        df = pd.read_csv(SpatioTemporal.file_path, header=None)
+        df = df.drop_duplicates(keep='first', inplace=False)
         return df
 
     @staticmethod
     def draw_line_on_map(road, collection):
         """
         在地图上画点，线
-        :param all_line:
         :return:
         """
         # colors = ['black', 'green', 'yellow', 'orange', 'red']
@@ -129,24 +134,28 @@ class SpatioTemporal():
             for graph in congestion_propagation_graph:
                 if flag == 1:
                     break
-                for edge in graph:
+                for edge in graph[0]:
                     if edge == lcode1:
-                        graph.add(lcode2)
+                        graph[0].add(lcode2)
                         flag = 1
+                        graph[1].append((lcode1, lcode2, _ ))
                         break
                     elif edge == lcode2:
-                        graph.add(lcode1)
+                        graph[0].add(lcode1)
                         flag = 1
+                        graph[1].append((lcode1, lcode2, _))
                         break
             if flag == 1:
                 continue
             new_graph = set()
             new_graph.add(lcode1)
             new_graph.add(lcode2)
-            congestion_propagation_graph.append(new_graph)
+            new_edge = list()
+            new_edge.append((lcode1, lcode2, _))
+            congestion_propagation_graph.append([new_graph, new_edge])
         congestion_propagation_graph_list = list()
         for i in congestion_propagation_graph:
-            if len(i) > 2:
+            if len(i[0]) > 2:
                 congestion_propagation_graph_list.append(list(i))
         return congestion_propagation_graph_list
 
@@ -224,11 +233,20 @@ class SpatioTemporal():
 
 if __name__ == '__main__':
     # SpatioTemporal.spatio_temporal_correlation()
-    graph_list = SpatioTemporal.create_graphs()
-    csv_lists = ProcessData.get_csv_path(ProcessData.file_name)
-    for csv_file in csv_lists:
-        data = ProcessData.open_road_csv(csv_file)
-        congestion_time, congestion_data = SpatioTemporal.get_graph_congestion(graph_list[1], data, time_interal=8)
-        # ProcessData.get_temporal_correlation(data)
-        SpatioTemporal.process_congestion_data(congestion_data)
-        break
+    # graph_list = SpatioTemporal.create_graphs()
+    # csv_lists = ProcessData.get_csv_path(ProcessData.file_name)
+    # for csv_file in csv_lists:
+    #     data = ProcessData.open_road_csv(csv_file)
+    #     # congestion_time, congestion_data = SpatioTemporal.get_graph_congestion(graph_list[1][0], data, time_interal=8)
+    #     # ProcessData.get_temporal_correlation(data)
+    #     SpatioTemporal.spatio_temporal_correlation()
+    #     # SpatioTemporal.process_congestion_data(congestion_data)
+    #     break
+    road = RoadInfo.get_road_info()
+    # edge_list = graph_list[1][1]
+    # print(edge_list)
+    edge_list = SpatioTemporal.open_correlation_csv().values
+    SpatioTemporal.draw_line_on_map(road, edge_list).save(SpatioTemporal.html_path)
+    # congestion_dict = SpatioTemporal.open_dict_data()
+    # for k in congestion_dict:
+    #     print(k, congestion_dict[k][0])

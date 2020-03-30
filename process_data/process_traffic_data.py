@@ -96,38 +96,37 @@ class ProcessData():
             pass
         df.to_csv(ProcessData.top_congestion_path, header=True, index=True)
 
-
     @staticmethod
-    def get_temporal_correlation(data):
+    def get_temporal_correlation(data, time_interal=10):
         """
         根据拥堵信息，构建路段时间关联信息
         :return:
         """
 
         datas = data[data["CongestionRate"] >= 3]
-        df = pd.DataFrame(columns=['lcode1', 'lcode2', 'correlation'])
+        df = pd.DataFrame(columns=['lcode1', 'lcode2'])
         # df = pd.read_csv('../road_data/road_correlation.csv')
         number = len(datas)
         count = 0
         for i in range(number):
-            count += 1
             current_time = datas.index[i]
             # 获取之后所有拥堵点的数据
-            end_time = current_time + datetime.timedelta(minutes=10)
+            end_time = current_time + datetime.timedelta(minutes=time_interal)
             # 或许之后10分钟之内的数据
             tmp = datas[current_time:end_time]
             lcode_lists = set(ProcessData.get_row_on_name(tmp, 'Lcode'))
             lcode = datas.iloc[i].at['Lcode']
             for l in lcode_lists:
                 if l != lcode:
-                    df.loc[count] = [lcode, l, 1]
+                    count += 1
+                    df.loc[count] = [lcode, l]
             if i % 100 == 0:
                 print(i)
                 df = df.drop_duplicates(
                     keep='first',
                     inplace=False)
                 df.to_csv(ProcessData.correlation_path, mode='a', index=False, header=False)
-                df = pd.DataFrame(columns=['lcode1', 'lcode2', 'correlation'])
+                df = pd.DataFrame(columns=['lcode1', 'lcode2'])
 
     @staticmethod
     def open_road_correlation():
@@ -139,7 +138,7 @@ class ProcessData():
         df = df.drop_duplicates(
             keep='first',
             inplace=False)
-        df.columns = ['lcode1', 'lcode2', 'correlation']
+        df.columns = ['lcode1', 'lcode2']
         df.reset_index(drop=True)
         return df
 
@@ -184,11 +183,45 @@ class ProcessData():
         plt.legend(loc="upper right")
         plt.show()
 
+    @staticmethod
+    def draw_speed_of_lcode(lcode, data):
+        """
+        画出lcode之间的
+        :param lcode:
+        :param data:
+        :return:
+        """
+        one_lcode_data = data[data['Lcode'] == lcode]
+        speed = one_lcode_data['speed'].tolist()
+        # congestion_rate = one_lcode_data['CongestionRate']
+        avg = sum(speed) / len(speed)
+        plt.figure(figsize=(8, 6), dpi=160)
+        # 再创建一个规格为 1 x 1 的子图
+        plt.subplot(1, 1, 1)
+        # 柱子总数
+        # 包含每个柱子对应值的序列
+        time = np.arange(len(speed))
+        plt.plot(time, speed, label='速度')
+        # 画直线
+        plt.axhline(y=avg, color='r', linestyle='-.', label='平均速度')
+        plt.axhline(y=avg*0.6, color='b', linestyle='--', label='0.6 平均速度')
+        # 添加图例
+        # 设置横轴标签
+        plt.xlabel('时间(秒)')
+        # 设置纵轴标签
+        plt.ylabel('速度(km/h)')
+        # 添加标题
+        plt.title('路段速度曲线图')
+        plt.legend(loc="upper right")
+        plt.show()
+
 
 if __name__ == '__main__':
-    # csv_lists = ProcessData.get_csv_path(ProcessData.file_name)
-    # for csv_file in csv_lists:
-    #     data = ProcessData.open_road_csv(csv_file)
-    #     # ProcessData.get_temporal_correlation(data)
-    #     ProcessData.get_top_congestion_lcode(data)
-    ProcessData.draw_top_congestion()
+    csv_lists = ProcessData.get_csv_path(ProcessData.file_name)
+    for csv_file in csv_lists:
+        data = ProcessData.open_road_csv(csv_file)
+        ProcessData.draw_speed_of_lcode(2073, data)
+        # ProcessData.get_temporal_correlation(data)
+        break
+    # ProcessData.get_top_congestion_lcode(data)
+    # ProcessData.draw_top_congestion()

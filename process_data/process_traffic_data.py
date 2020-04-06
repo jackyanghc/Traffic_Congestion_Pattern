@@ -11,7 +11,7 @@ plt.rcParams['font.sans-serif'] = ['Arial Unicode MS']
 
 class ProcessData():
     file_name = '../traffic_data'
-    correlation_path = '../road_data/road_correlation.csv'
+    correlation_path = '../road_data/road_correlation_morning.csv'
     top_congestion_path = '../road_data/congestion_time.csv'
 
     @staticmethod
@@ -97,13 +97,21 @@ class ProcessData():
         df.to_csv(ProcessData.top_congestion_path, header=True, index=True)
 
     @staticmethod
-    def get_temporal_correlation(data, time_interal=10):
+    def get_temporal_correlation(data, time_interal=2, period=None):
         """
         根据拥堵信息，构建路段时间关联信息
         :return:
         """
 
         datas = data[data["CongestionRate"] >= 3]
+        if period == 'Morning':
+            current_time = datas.index[0]
+            end_time = datas.index[0] + datetime.timedelta(hours=3)
+            datas = datas[current_time:end_time]
+        if period == 'Evening':
+            current_time = datas.index[-1]
+            end_time = datas.index[-1] - datetime.timedelta(hours=3)
+            datas = datas[current_time:end_time]
         df = pd.DataFrame(columns=['lcode1', 'lcode2'])
         # df = pd.read_csv('../road_data/road_correlation.csv')
         number = len(datas)
@@ -120,11 +128,11 @@ class ProcessData():
                 if l != lcode:
                     count += 1
                     df.loc[count] = [lcode, l]
-            if i % 100 == 0:
+            if i % 10 == 0:
                 print(i)
-                df = df.drop_duplicates(
-                    keep='first',
-                    inplace=False)
+                # df = df.drop_duplicates(
+                #     keep='first',
+                #     inplace=False)
                 df.to_csv(ProcessData.correlation_path, mode='a', index=False, header=False)
                 df = pd.DataFrame(columns=['lcode1', 'lcode2'])
 
@@ -220,8 +228,8 @@ if __name__ == '__main__':
     csv_lists = ProcessData.get_csv_path(ProcessData.file_name)
     for csv_file in csv_lists:
         data = ProcessData.open_road_csv(csv_file)
-        ProcessData.draw_speed_of_lcode(2073, data)
-        # ProcessData.get_temporal_correlation(data)
+        # ProcessData.draw_speed_of_lcode(2073, data)
+        ProcessData.get_temporal_correlation(data, period='Morning')
         break
     # ProcessData.get_top_congestion_lcode(data)
     # ProcessData.draw_top_congestion()

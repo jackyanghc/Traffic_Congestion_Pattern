@@ -233,20 +233,20 @@ class SpatioTemporal():
 
 if __name__ == '__main__':
     # SpatioTemporal.spatio_temporal_correlation()
-    # graph_list = SpatioTemporal.create_graphs()
+    graph_list = SpatioTemporal.create_graphs()
     # csv_lists = ProcessData.get_csv_path(ProcessData.file_name)
     # for csv_file in csv_lists:
     #     data = ProcessData.open_road_csv(csv_file)
-    #     # congestion_time, congestion_data = SpatioTemporal.get_graph_congestion(graph_list[1][0], data, time_interal=8)
+    #     congestion_time, congestion_data = SpatioTemporal.get_graph_congestion(graph_list[13][0], data, time_interal=8)
     #     # ProcessData.get_temporal_correlation(data)
-    #     SpatioTemporal.spatio_temporal_correlation()
-    #     # SpatioTemporal.process_congestion_data(congestion_data)
+    #     # SpatioTemporal.spatio_temporal_correlation()
+    #     SpatioTemporal.process_congestion_data(congestion_data)
     #     break
     road = RoadInfo.get_road_info()
-    # edge_list = graph_list[1][1]
+    edge_list = graph_list[13][1]
     # print(edge_list)
-    edge_list = SpatioTemporal.open_correlation_csv().values
+    # edge_list = SpatioTemporal.open_correlation_csv().values
     SpatioTemporal.draw_line_on_map(road, edge_list).save(SpatioTemporal.html_path)
-    # congestion_dict = SpatioTemporal.open_dict_data()
-    # for k in congestion_dict:
-    #     print(k, congestion_dict[k][0])
+    congestion_dict = SpatioTemporal.open_dict_data()
+    for k in congestion_dict:
+        print(k, congestion_dict[k][1])

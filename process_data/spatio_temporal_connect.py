@@ -12,8 +12,8 @@ class SpatioTemporal():
     """
     结合时间和空间，构建拥堵模式graph
     """
-    file_path = '../road_data/spatio_temporal_correlation.csv'
-    html_path = '../roadmap_html/Roadmap_1.html'
+    file_path = '../road_data/spatio_temporal_correlation_morning.csv'
+    html_path = '../roadmap_html/Roadmap_4.html'
     congestion_file = '../congestion_data/congestion.txt'
 
     @staticmethod
@@ -22,8 +22,8 @@ class SpatioTemporal():
         获得路径关联矩阵
         :return:
         """
-        road = RoadInfo.open_road_distance(5)
-        time = ProcessData.open_road_correlation()
+        road = RoadInfo.open_road_distance(threshold=1)
+        time = ProcessData.open_road_correlation(threshold=5)
         df = pd.DataFrame(columns=['lcode1', 'lcode2', 'dis'])
         count = 0
         for i in range(len(time)):
@@ -80,7 +80,7 @@ class SpatioTemporal():
             loc2 = [road2.coords[count2][1], road2.coords[count2][0]]
             folium.CircleMarker(
                         location=loc1,
-                        radius=10,
+                        radius=5,
                         popup='popup',
                         color='red',  # 圈的颜色
                         fill=True,
@@ -88,7 +88,7 @@ class SpatioTemporal():
                         ).add_to(maps)
             folium.CircleMarker(
                         location=loc2,
-                        radius=10,
+                        radius=5,
                         popup='popup',
                         color='red',  # 圈的颜色
                         fill=True,
@@ -96,7 +96,7 @@ class SpatioTemporal():
                         ).add_to(maps)
             folium.PolyLine(
                 [loc1, loc2],
-                weight=4,  # 粗细
+                weight=2,  # 粗细
                 opacity=0.8,  # 透明度
                 color='black').add_to(maps)
         return maps
@@ -233,7 +233,7 @@ class SpatioTemporal():
 
 if __name__ == '__main__':
     # SpatioTemporal.spatio_temporal_correlation()
-    graph_list = SpatioTemporal.create_graphs()
+    # graph_list = SpatioTemporal.create_graphs()
     # csv_lists = ProcessData.get_csv_path(ProcessData.file_name)
     # for csv_file in csv_lists:
     #     data = ProcessData.open_road_csv(csv_file)
@@ -243,10 +243,10 @@ if __name__ == '__main__':
     #     SpatioTemporal.process_congestion_data(congestion_data)
     #     break
     road = RoadInfo.get_road_info()
-    edge_list = graph_list[13][1]
+    # edge_list = graph_list[13][1]
     # print(edge_list)
-    # edge_list = SpatioTemporal.open_correlation_csv().values
+    edge_list = SpatioTemporal.open_correlation_csv().values
     SpatioTemporal.draw_line_on_map(road, edge_list).save(SpatioTemporal.html_path)
-    congestion_dict = SpatioTemporal.open_dict_data()
-    for k in congestion_dict:
-        print(k, congestion_dict[k][1])
+    # congestion_dict = SpatioTemporal.open_dict_data()
+    # for k in congestion_dict:
+    #     print(k, congestion_dict[k][1])

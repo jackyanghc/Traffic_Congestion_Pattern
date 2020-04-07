@@ -11,7 +11,7 @@ plt.rcParams['font.sans-serif'] = ['Arial Unicode MS']
 
 class ProcessData():
     file_name = '../traffic_data'
-    correlation_path = '../road_data/road_correlation_morning.csv'
+    correlation_path = '../road_data/road_correlation_Evening.csv'
     top_congestion_path = '../road_data/congestion_time.csv'
 
     @staticmethod
@@ -104,14 +104,14 @@ class ProcessData():
         """
 
         datas = data[data["CongestionRate"] >= 3]
-        if period == 'Morning':
+        if period == 'Evening':
             current_time = datas.index[0]
             end_time = datas.index[0] + datetime.timedelta(hours=3)
             datas = datas[current_time:end_time]
         if period == 'Evening':
             current_time = datas.index[-1]
             end_time = datas.index[-1] - datetime.timedelta(hours=3)
-            datas = datas[current_time:end_time]
+            datas = datas[end_time:current_time]
         df = pd.DataFrame(columns=['lcode1', 'lcode2'])
         # df = pd.read_csv('../road_data/road_correlation.csv')
         number = len(datas)
@@ -137,17 +137,17 @@ class ProcessData():
                 df = pd.DataFrame(columns=['lcode1', 'lcode2'])
 
     @staticmethod
-    def open_road_correlation():
+    def open_road_correlation(threshold=2):
         """
 
         :return:
         """
         df = pd.read_csv(ProcessData.correlation_path)
-        df = df.drop_duplicates(
-            keep='first',
-            inplace=False)
         df.columns = ['lcode1', 'lcode2']
-        df.reset_index(drop=True)
+        # 遍历子图
+        df = df.groupby(['lcode1', 'lcode2']).size().reset_index(name='size')
+        df = df[df['size'] > threshold]
+        df = df[['lcode1', 'lcode2']]
         return df
 
     @staticmethod
@@ -229,7 +229,7 @@ if __name__ == '__main__':
     for csv_file in csv_lists:
         data = ProcessData.open_road_csv(csv_file)
         # ProcessData.draw_speed_of_lcode(2073, data)
-        ProcessData.get_temporal_correlation(data, period='Morning')
+        ProcessData.get_temporal_correlation(data, period='Evening')
         break
     # ProcessData.get_top_congestion_lcode(data)
     # ProcessData.draw_top_congestion()
